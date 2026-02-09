@@ -1,6 +1,9 @@
 # Interactive Artwork with Firebase 🎨
+https://interactive-sliders.netlify.app/artwork 
 
-Control artwork in real-time from anywhere in the world using Firebase!
+Open https://interactive-sliders.netlify.app/artwork on a desktop or a laptop, scan the QR code with a smartphone, and control the artwork remotely
+
+Control artwork in real-time from anywhere in the world!
 
 ## Features
 
