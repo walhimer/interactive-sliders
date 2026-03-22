@@ -13,13 +13,28 @@ function Home() {
           Proof of Concept
           <span className="subtitle">Orbiting circle · color · size · speed</span>
         </Link>
-        <Link to="/poc/controller" className="button">
-          🎮 Controller
-          <span className="subtitle">Control any piece from your phone</span>
+        <Link to="/disc-021" className="button">
+          disc (021)
+          <span className="subtitle">Coming soon</span>
+        </Link>
+        <Link to="/disc-019" className="button">
+          disc (019)
+          <span className="subtitle">Coming soon</span>
         </Link>
       </div>
       <div className="instructions">
         <p>Open a piece on the display screen. Scan the QR code to control it.</p>
+      </div>
+    </div>
+  );
+}
+
+function ComingSoon({ title }) {
+  return (
+    <div className="home">
+      <h1>{title}</h1>
+      <div className="instructions">
+        <p>Coming soon.</p>
       </div>
     </div>
   );
@@ -33,6 +48,10 @@ function App() {
         <Route path="/poc" element={<ArtworkDisplay />} />
         <Route path="/poc/controller" element={<Controller />} />
         <Route path="/controller" element={<Controller />} />
+        <Route path="/disc-021" element={<ComingSoon title="disc (021)" />} />
+        <Route path="/disc-021/controller" element={<ComingSoon title="disc (021) controller" />} />
+        <Route path="/disc-019" element={<ComingSoon title="disc (019)" />} />
+        <Route path="/disc-019/controller" element={<ComingSoon title="disc (019) controller" />} />
       </Routes>
     </Router>
   );
