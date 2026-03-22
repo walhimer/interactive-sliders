@@ -159,3 +159,4 @@ src/
 No servers. No networking headaches. Just Firebase magic! ✨
 
 Questions? The Firebase docs are excellent: https://firebase.google.com/docs/database
+.
