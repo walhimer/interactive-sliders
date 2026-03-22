@@ -64,7 +64,7 @@ function ArtworkDisplay() {
     }, () => setIsConnected(false));
 
     return () => unsubscribe();
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Three.js — runs exactly once ─────────────────────────────────────
   useEffect(() => {
@@ -148,7 +148,7 @@ function ArtworkDisplay() {
       window.removeEventListener('resize', onResize);
       renderer.dispose();
     };
-  }, []); // ← empty: setup runs once, animation loop lives forever
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Build disc into scene ─────────────────────────────────────────────
   function buildDiscIntoScene(scene, p) {
