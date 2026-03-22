@@ -3,124 +3,185 @@ import { database } from '../firebase';
 import { ref, set, onValue } from 'firebase/database';
 import './Controller.css';
 
+// ── disc (021) parameter definitions ────────────────────────────────────
+// Each param maps directly to the variable name used in the artwork
+const PARAMS = [
+  {
+    key:     'morphSpeed',
+    label:   'Speed',
+    hint:    'Animation pulse rate',
+    min:     0.07,
+    max:     0.21,
+    step:    0.002,
+    default: 0.14,
+    format:  v => v.toFixed(3),
+  },
+  {
+    key:     'morphDepth',
+    label:   'Depth',
+    hint:    'Surface deformation amount',
+    min:     1.4,
+    max:     2.8,
+    step:    0.05,
+    default: 2.1,
+    format:  v => v.toFixed(2),
+  },
+  {
+    key:     'slowSpin',
+    label:   'Spin',
+    hint:    'Rotation direction + speed',
+    min:     -0.005,
+    max:     0.005,
+    step:    0.0002,
+    default: 0.001,
+    format:  v => (v >= 0 ? '+' : '') + v.toFixed(4),
+  },
+  {
+    key:     'discRadius',
+    label:   'Size',
+    hint:    'Disc radius',
+    min:     1.4,
+    max:     2.3,
+    step:    0.05,
+    default: 1.8,
+    format:  v => v.toFixed(2),
+  },
+  {
+    key:     'colorR',
+    label:   'Warm',
+    hint:    'Red channel',
+    min:     0.70,
+    max:     0.90,
+    step:    0.01,
+    default: 0.80,
+    format:  v => v.toFixed(2),
+    color:   '#c0504d',
+  },
+  {
+    key:     'colorG',
+    label:   'Mid',
+    hint:    'Green channel',
+    min:     0.63,
+    max:     0.78,
+    step:    0.01,
+    default: 0.70,
+    format:  v => v.toFixed(2),
+    color:   '#9bbb59',
+  },
+  {
+    key:     'colorB',
+    label:   'Cool',
+    hint:    'Blue channel',
+    min:     0.52,
+    max:     0.68,
+    step:    0.01,
+    default: 0.60,
+    format:  v => v.toFixed(2),
+    color:   '#4bacc6',
+  },
+];
+
+// Build initial state from defaults
+const initialValues = () =>
+  PARAMS.reduce((acc, p) => ({ ...acc, [p.key]: p.default }), {});
+
 function Controller() {
-  const [color, setColor] = useState(180);
-  const [size, setSize] = useState(50);
-  const [speed, setSpeed] = useState(5);
+  const [values, setValues]         = useState(initialValues);
   const [isConnected, setIsConnected] = useState(false);
 
-  // Load initial values from Firebase
+  // Load current Firebase values on mount so controller syncs to display
   useEffect(() => {
     const artworkRef = ref(database, 'artwork');
-    
     const unsubscribe = onValue(artworkRef, (snapshot) => {
       const data = snapshot.val();
-      if (data) {
-        setColor(data.color || 180);
-        setSize(data.size || 50);
-        setSpeed(data.speed || 5);
-        setIsConnected(true);
-      }
-    }, (error) => {
-      console.error('Firebase error:', error);
-      setIsConnected(false);
-    });
-
+      if (!data) return;
+      setIsConnected(true);
+      // Only sync keys we own — don't overwrite with undefined
+      setValues(prev => {
+        const next = { ...prev };
+        PARAMS.forEach(p => {
+          if (data[p.key] !== undefined) next[p.key] = data[p.key];
+        });
+        return next;
+      });
+    }, () => setIsConnected(false));
     return () => unsubscribe();
   }, []);
 
-  // Update Firebase when sliders change
-  const updateFirebase = (newColor, newSize, newSpeed) => {
-    const artworkRef = ref(database, 'artwork');
-    set(artworkRef, {
-      color: newColor,
-      size: newSize,
-      speed: newSpeed,
-      timestamp: Date.now()
-    }).catch((error) => {
-      console.error('Error updating Firebase:', error);
-    });
+  // Write a single key to Firebase immediately on change
+  const handleChange = (key, rawValue) => {
+    const value = parseFloat(rawValue);
+    setValues(prev => ({ ...prev, [key]: value }));
+    set(ref(database, `artwork/${key}`), value).catch(console.error);
   };
 
-  const handleColorChange = (value) => {
-    setColor(value);
-    updateFirebase(value, size, speed);
+  // New Seed — writes a random seed + triggerSeed flag
+  const handleNewSeed = () => {
+    const seed = Math.floor(Math.random() * 999999) + 1;
+    set(ref(database, 'artwork/seed'), seed).catch(console.error);
+    set(ref(database, 'artwork/triggerSeed'), true).catch(console.error);
   };
 
-  const handleSizeChange = (value) => {
-    setSize(value);
-    updateFirebase(color, value, speed);
+  // Reset all params to defaults
+  const handleReset = () => {
+    const defaults = initialValues();
+    setValues(defaults);
+    const updates = {};
+    PARAMS.forEach(p => { updates[p.key] = p.default; });
+    set(ref(database, 'artwork'), updates).catch(console.error);
   };
 
-  const handleSpeedChange = (value) => {
-    setSpeed(value);
-    updateFirebase(color, size, value);
-  };
+  // Disc preview color from current RGB values
+  const previewColor = `rgb(${Math.round(values.colorR * 255)}, ${Math.round(values.colorG * 255)}, ${Math.round(values.colorB * 255)})`;
 
   return (
     <div className="controller">
-      <h1>Artwork Controller</h1>
-      
-      <div className="status-bar">
-        {isConnected ? '🟢 Connected' : '🔴 Connecting...'}
+      <div className="controller-header">
+        <h1>disc <span className="piece-num">(021)</span></h1>
+        <div className={`status-badge ${isConnected ? 'connected' : 'disconnected'}`}>
+          {isConnected ? '● live' : '○ connecting'}
+        </div>
       </div>
 
-      <div className="control-group">
-        <label>Color: {color}°</label>
-        <input
-          type="range"
-          min="0"
-          max="360"
-          value={color}
-          onChange={(e) => handleColorChange(parseInt(e.target.value))}
-          className="slider color-slider"
-          style={{ 
-            background: `linear-gradient(to right, 
-              hsl(0, 70%, 60%), 
-              hsl(60, 70%, 60%), 
-              hsl(120, 70%, 60%), 
-              hsl(180, 70%, 60%), 
-              hsl(240, 70%, 60%), 
-              hsl(300, 70%, 60%), 
-              hsl(360, 70%, 60%)
-            )`
-          }}
+      {/* Color preview disc */}
+      <div className="disc-preview">
+        <div
+          className="disc-preview-circle"
+          style={{ background: previewColor }}
         />
       </div>
 
-      <div className="control-group">
-        <label>Size: {size}px</label>
-        <input
-          type="range"
-          min="10"
-          max="150"
-          value={size}
-          onChange={(e) => handleSizeChange(parseInt(e.target.value))}
-          className="slider"
-        />
+      {/* Parameter sliders */}
+      <div className="controls">
+        {PARAMS.map(p => (
+          <div className="control-group" key={p.key}>
+            <div className="control-label">
+              <span className="label-name">{p.label}</span>
+              <span className="label-value">{p.format(values[p.key])}</span>
+            </div>
+            <input
+              type="range"
+              min={p.min}
+              max={p.max}
+              step={p.step}
+              value={values[p.key]}
+              onChange={e => handleChange(p.key, e.target.value)}
+              className="slider"
+              style={p.color ? { '--accent': p.color } : {}}
+            />
+          </div>
+        ))}
       </div>
 
-      <div className="control-group">
-        <label>Speed: {speed}</label>
-        <input
-          type="range"
-          min="1"
-          max="20"
-          value={speed}
-          onChange={(e) => handleSpeedChange(parseInt(e.target.value))}
-          className="slider"
-        />
+      {/* Action buttons */}
+      <div className="actions">
+        <button className="btn btn-seed" onClick={handleNewSeed}>
+          NEW SEED
+        </button>
+        <button className="btn btn-reset" onClick={handleReset}>
+          RESET
+        </button>
       </div>
-
-      <div className="preview" style={{
-        width: `${size}px`,
-        height: `${size}px`,
-        background: `hsl(${color}, 70%, 60%)`,
-        borderRadius: '50%',
-        margin: '30px auto',
-        transition: 'all 0.3s ease',
-        boxShadow: `0 0 30px hsl(${color}, 70%, 60%)`
-      }}></div>
     </div>
   );
 }
