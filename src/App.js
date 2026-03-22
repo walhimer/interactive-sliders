@@ -7,20 +7,19 @@ import './App.css';
 function Home() {
   return (
     <div className="home">
-      <h1>🎨 Interactive Artwork</h1>
+      <h1>Mark Walhimer — Interactive Works</h1>
       <div className="links">
-        <Link to="/artwork" className="button">
-          📺 Artwork Display
-          <span className="subtitle">Open this on your laptop/gallery screen</span>
+        <Link to="/poc" className="button">
+          Proof of Concept
+          <span className="subtitle">Orbiting circle · color · size · speed</span>
         </Link>
-        <Link to="/controller" className="button">
+        <Link to="/poc/controller" className="button">
           🎮 Controller
-          <span className="subtitle">Open this on your phone</span>
+          <span className="subtitle">Control any piece from your phone</span>
         </Link>
       </div>
       <div className="instructions">
-        <p>✨ Control the artwork from anywhere in the world!</p>
-        <p>Multiple people can control at the same time.</p>
+        <p>Open a piece on the display screen. Scan the QR code to control it.</p>
       </div>
     </div>
   );
@@ -31,7 +30,8 @@ function App() {
     <Router>
       <Routes>
         <Route path="/" element={<Home />} />
-        <Route path="/artwork" element={<ArtworkDisplay />} />
+        <Route path="/poc" element={<ArtworkDisplay />} />
+        <Route path="/poc/controller" element={<Controller />} />
         <Route path="/controller" element={<Controller />} />
       </Routes>
     </Router>
